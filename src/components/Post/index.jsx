@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from "react-router-dom";
 import clsx from 'clsx';
 import IconButton from '@mui/material/IconButton';
 import DeleteIcon from '@mui/icons-material/Clear';
@@ -9,9 +10,12 @@ import CommentIcon from '@mui/icons-material/ChatBubbleOutlineOutlined';
 import styles from './Post.module.scss';
 import { UserInfo } from '../UserInfo';
 import { PostSkeleton } from './Skeleton';
+import { useDispatch, useSelector } from 'react-redux';
+import { fetchRemovePost, fecthTags } from '../../redux/slices/postSlice';
+
 
 export const Post = ({
-  _id,
+  id,
   title,
   createdAt,
   imageUrl,
@@ -24,21 +28,29 @@ export const Post = ({
   isLoading,
   isEditable,
 }) => {
+
+  const dispatch = useDispatch();
+  const {data} = useSelector(state => state.authSlice)
   if (isLoading) {
     return <PostSkeleton />;
   }
 
-  const onClickRemove = () => {};
-
+  const onClickRemove = () => {
+    if (window.confirm("Вы уверены, что безжалостно удалите статью и больше не сможете ее восстановить?")){
+      dispatch(fetchRemovePost(id))
+      dispatch(fecthTags())
+    }
+  };
+  console.log(data);
   return (
     <div className={clsx(styles.root, { [styles.rootFull]: isFullPost })}>
       {isEditable && (
         <div className={styles.editButtons}>
-          <a href={`/posts/${_id}/edit`}>
+          <Link to={`/posts/${id}/edit`}>
             <IconButton color="primary">
               <EditIcon />
             </IconButton>
-          </a>
+          </Link>
           <IconButton onClick={onClickRemove} color="secondary">
             <DeleteIcon />
           </IconButton>
@@ -47,7 +59,7 @@ export const Post = ({
       {imageUrl && (
         <img
           className={clsx(styles.image, { [styles.imageFull]: isFullPost })}
-          src={imageUrl}
+          src={`http://localhost:4444${imageUrl}`}
           alt={title}
         />
       )}
@@ -55,12 +67,12 @@ export const Post = ({
         <UserInfo {...user} additionalText={createdAt} />
         <div className={styles.indention}>
           <h2 className={clsx(styles.title, { [styles.titleFull]: isFullPost })}>
-            {isFullPost ? title : <a href={`/posts/${_id}`}>{title}</a>}
+            {isFullPost ? title : (data===undefined ? <Link onClick={() => alert('Нужно войти в аккаунт!')} to={'/'}>{title}</Link> : <Link to={`/posts/${id}`}>{title}</Link>)}
           </h2>
           <ul className={styles.tags}>
             {tags.map((name) => (
               <li key={name}>
-                <a href={`/tag/${name}`}>#{name}</a>
+                <Link to={`/tags/${name}`}>#{name}</Link>
               </li>
             ))}
           </ul>

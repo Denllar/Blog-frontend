@@ -1,39 +1,51 @@
 import React from 'react';
+import { Link, useNavigate } from "react-router-dom";
 import Button from '@mui/material/Button';
 
 import styles from './Header.module.scss';
 import Container from '@mui/material/Container';
+import { useDispatch, useSelector } from 'react-redux';
+import { setLogout } from '../../redux/slices/authSlice';
 
 export const Header = () => {
-  const isAuth = false;
-
-  const onClickLogout = () => {};
+  const dispatch = useDispatch()
+  const { data } = useSelector(state => state.authSlice)
+  const isAuth = Boolean(data)
+  const navigate = useNavigate()
+  const onClickLogout = () => {
+    if (window.confirm('Вы уверены, что хотите выйти?')) {
+      dispatch(setLogout())
+      navigate('/')
+      window.localStorage.removeItem('token')
+      window.localStorage.removeItem('toggle')
+    }
+  };
 
   return (
     <div className={styles.root}>
       <Container maxWidth="lg">
         <div className={styles.inner}>
-          <a className={styles.logo} href="/">
-            <div>ARCHAKOV BLOG</div>
-          </a>
+          <Link className={styles.logo} to="/">
+            <div>BLOG</div>
+          </Link>
           <div className={styles.buttons}>
             {isAuth ? (
               <>
-                <a href="/posts/create">
+                <Link to="/posts/create">
                   <Button variant="contained">Написать статью</Button>
-                </a>
+                </Link>
                 <Button onClick={onClickLogout} variant="contained" color="error">
                   Выйти
                 </Button>
               </>
             ) : (
               <>
-                <a href="/login">
+                <Link to="/login">
                   <Button variant="outlined">Войти</Button>
-                </a>
-                <a href="/register">
+                </Link>
+                <Link to="/register">
                   <Button variant="contained">Создать аккаунт</Button>
-                </a>
+                </Link>
               </>
             )}
           </div>

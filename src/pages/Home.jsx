@@ -3,39 +3,71 @@ import Tabs from '@mui/material/Tabs';
 import Tab from '@mui/material/Tab';
 import Grid from '@mui/material/Grid';
 
+import { useDispatch, useSelector } from 'react-redux';
+
 import { Post } from '../components/Post';
 import { TagsBlock } from '../components/TagsBlock';
 import { CommentsBlock } from '../components/CommentsBlock';
+import { fecthPosts, fecthTags } from '../redux/slices/postSlice';
+import { useParams } from 'react-router-dom';
 
 export const Home = () => {
+  const toggle = window.localStorage.getItem('toggle')
+  const [isClickToggle, setIsClickToggle] = React.useState(true)
+  const dispatch = useDispatch()
+  const { posts, tags } = useSelector(state => state.postSlice)
+  const { data } = useSelector(state => state.authSlice)
+
+  const isLoadingPosts = posts.status === 'loading'
+  const isLoadingTags = tags.status === 'loading'
+
+  const { tag } = useParams();
+
+  React.useEffect(() => {
+    dispatch(fecthPosts({ toggle, tag }))
+    dispatch(fecthTags())
+  }, [isClickToggle, tag])
+
+
   return (
     <>
-      <Tabs style={{ marginBottom: 15 }} value={0} aria-label="basic tabs example">
-        <Tab label="Новые" />
-        <Tab label="Популярные" />
+      {
+        tag && <h1>#{tag}</h1>
+      }
+      <Tabs style={{ marginBottom: 15 }} value={Number(toggle)} aria-label="basic tabs example">
+        <Tab onClick={() => {
+          setIsClickToggle(prev => !prev)
+          window.localStorage.setItem('toggle', 0)
+        }} label="Новые" />
+        <Tab onClick={() => {
+          setIsClickToggle(prev => !prev)
+          window.localStorage.setItem('toggle', 1)
+        }} label="Популярные" />
       </Tabs>
+
       <Grid container spacing={4}>
         <Grid xs={8} item>
-          {[...Array(5)].map(() => (
+          {(isLoadingPosts ? [...Array(5)] : posts.items).map((item, index) => isLoadingPosts ? (<Post key={index} isLoading={true} />) : (
             <Post
-              id={1}
-              title="Roast the code #1 | Rock Paper Scissors"
-              imageUrl="https://res.cloudinary.com/practicaldev/image/fetch/s--UnAfrEG8--/c_imagga_scale,f_auto,fl_progressive,h_420,q_auto,w_1000/https://dev-to-uploads.s3.amazonaws.com/uploads/articles/icohm5g0axh9wjmu4oc3.png"
+              id={item._id}
+              title={item.title}
+              imageUrl={item.imageUrl}
               user={{
-                avatarUrl:
-                  'https://res.cloudinary.com/practicaldev/image/fetch/s--uigxYVRB--/c_fill,f_auto,fl_progressive,h_50,q_auto,w_50/https://dev-to-uploads.s3.amazonaws.com/uploads/user/profile_image/187971/a5359a24-b652-46be-8898-2c5df32aa6e0.png',
-                fullName: 'Keff',
+                avatarUrl: item.user?.avatarUrl,
+                fullName: item.user?.fullName
               }}
-              createdAt={'12 июня 2022 г.'}
-              viewsCount={150}
-              commentsCount={3}
-              tags={['react', 'fun', 'typescript']}
-              isEditable
+              createdAt={item.createdAt.replace('T', ' время: ').replace('Z', '')}
+              viewsCount={item.viewsCount}
+              commentsCount={item.commentsCount}
+              isLoading={isLoadingPosts}
+              tags={item.tags}
+              isEditable={data?._id === item.user?._id}
             />
           ))}
         </Grid>
+
         <Grid xs={4} item>
-          <TagsBlock items={['react', 'typescript', 'заметки']} isLoading={false} />
+          <TagsBlock items={tags.items} isLoading={isLoadingTags} />
           <CommentsBlock
             items={[
               {
@@ -43,14 +75,21 @@ export const Home = () => {
                   fullName: 'Вася Пупкин',
                   avatarUrl: 'https://mui.com/static/images/avatar/1.jpg',
                 },
-                text: 'Это тестовый комментарий',
+                text: 'Цель этого сайта - вести свой блог',
               },
               {
                 user: {
                   fullName: 'Иван Иванов',
                   avatarUrl: 'https://mui.com/static/images/avatar/2.jpg',
                 },
-                text: 'When displaying three lines or more, the avatar is not aligned at the top. You should set the prop to align the avatar at the top',
+                text: 'Чтобы друзья и другие люди могли видеть твои мысли, успех и просто быть в курсе твоих новостей?',
+              },
+              {
+                user: {
+                  fullName: 'Вася Пупкин',
+                  avatarUrl: 'https://mui.com/static/images/avatar/1.jpg',
+                },
+                text: 'Да',
               },
             ]}
             isLoading={false}
